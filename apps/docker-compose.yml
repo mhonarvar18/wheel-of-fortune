@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wof-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wof_main
+    ports: ['3306:3306']
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: wof-redis
+    ports: ['6379:6379']
+
+  nats:
+    image: nats:2-alpine
+    container_name: wof-nats
+    ports: ['4222:4222', '8222:8222']
+    command: ['-js']
+
+volumes:
+  mysql_data:

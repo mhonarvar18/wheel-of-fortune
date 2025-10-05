@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
+  "baseUrl": ".",
+  "paths": {
+    "@app/common": ["libs/common/src"]
+  },
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": false,          // ⬅️ تولید d.ts را خاموش کن
+    "emitDeclarationOnly": false,  // ⬅️ اطمینان
+    "skipLibCheck": true,          // ⬅️ چک کردن تایپ لایبرری‌ها را رد کن
+    "preserveSymlinks": true
+  }
+}
