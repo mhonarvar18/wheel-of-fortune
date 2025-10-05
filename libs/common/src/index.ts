@@ -1,3 +1,16 @@
+export type * from './types/point.types';
+export type * from './types/identity.types';
+export type * from './types/prize.types';
+export type * from './types/spin.types';
+
+export const REASONS = [
+  'signup',
+  'referral_referrer',
+  'referral_referee',
+  'purchase',
+  'spin_award',
+] as const;
+
 import { PrizeType } from './types/prize.types';
 
 export const NATS_SERVERS = process.env.NATS_URL || 'nats://localhost:4222';

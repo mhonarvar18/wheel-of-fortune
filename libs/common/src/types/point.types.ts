@@ -1,11 +1,4 @@
-// ✔ یک مقدار runtime داریم
-export const REASONS = [
-  'signup',
-  'referral_referrer',
-  'referral_referee',
-  'purchase',
-  'spin_award',
-] as const;
+import { REASONS } from '../index';
 
 // ✔ نوع از روی مقدار استنتاج می‌شود
 export type PointsReason = (typeof REASONS)[number];

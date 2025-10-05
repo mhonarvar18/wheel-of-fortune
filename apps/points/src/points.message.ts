@@ -3,17 +3,18 @@ import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
 import { PointEntry } from '../../points/src/models/point-entry.model';
 import { PointBalance } from '../../points/src/models/point-balance.model';
-import { MSG } from '@app/common';
-import {
-  REASONS,
-  type PointsApplyDto,
-  type PointsBalanceResponse,
-  type PointsEntry,
-  type PointsHistoryResponse,
-  type PointsReason,
-} from '@app/common/src/types/point.types';
+
 import type { Transaction } from 'sequelize';
 import { UniqueConstraintError } from 'sequelize';
+
+import { REASONS, MSG } from '@app/common'; // مقدارها از پکیج
+import type {
+  PointsReason,
+  PointsApplyDto,
+  PointsBalanceResponse,
+  PointsEntry,
+  PointsHistoryResponse,
+} from '@app/common';
 
 @Controller()
 export class PointsMessages {
