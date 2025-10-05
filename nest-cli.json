@@ -22,6 +22,15 @@
         "tsConfigPath": "apps/identity/tsconfig.app.json"
       }
     },
+    "points": {
+      "type": "application",
+      "root": "apps/points",
+      "entryFile": "main",
+      "sourceRoot": "apps/points/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/points/tsconfig.app.json"
+      }
+    },
     "prize": {
       "type": "application",
       "root": "apps/prize",

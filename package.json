@@ -11,14 +11,17 @@
   "license": "UNLICENSED",
   "scripts": {
     "start:identity": "nest start identity",
+    "start:points": "nest start points",
     "start:prize": "nest start prize",
     "start:spin": "nest start spin",
     "start:gateway": "nest start api-gateway",
     "start:dev:identity": "nest start identity --watch",
+    "start:dev:points": "nest start points --watch",
     "start:dev:prize": "nest start prize --watch",
     "start:dev:spin": "nest start spin --watch",
     "start:dev:gateway": "nest start api-gateway --watch",
     "build:identity": "nest build identity",
+    "build:points": "nest build points",
     "build:prize": "nest build prize",
     "build:spin": "nest build spin",
     "build:gateway": "nest build api-gateway"

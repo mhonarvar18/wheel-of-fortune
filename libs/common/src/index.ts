@@ -5,10 +5,20 @@ export const NATS_SERVERS = process.env.NATS_URL || 'nats://localhost:4222';
 export const MSG = {
   AUTH_REGISTER: 'auth.register',
   AUTH_LOGIN: 'auth.login',
-  SPIN_EXECUTE: 'spin.execute',
+
   PRIZE_LIST: 'prize.list',
   PRIZE_AVAILABLE: 'prize.available',
   PRIZE_AWARDED: 'prize.awarded',
+
+  SPIN_EXECUTE: 'spin.execute',
+
+  // Points
+  POINTS_APPLY: 'points.apply',
+  POINTS_BALANCE: 'points.balance',
+  POINTS_HISTORY: 'points.history',
+
+  // رویداد رفرال (از identity)
+  REFERRAL_SIGNUP: 'referral.signup',
 } as const;
 
 export interface WeightedPrize {
