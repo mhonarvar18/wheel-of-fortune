@@ -7,7 +7,7 @@ export class IdentityController {
   constructor(private readonly identityService: IdentityService) {}
 
   @MessagePattern('auth.register')
-  async register(@Payload() data: { mobile: string; password: string }) {
+  async register(@Payload() data: { mobile: string; password: string; referralCode: string }) {
     return this.identityService.register(data);
   }
 
