@@ -151,6 +151,25 @@ export class PointsMessages {
     return { items };
   }
 
+  @EventPattern(MSG.BILLING_PURCHASE_PAID)
+  async onPurchasePaid(evt: {
+    purchaseId: string;
+    userId: string;
+    amount: number;
+    currency: string;
+    itemId: string;
+    at: string;
+  }) {
+    const delta = evt.amount >= 1_000_000 ? 5 : evt.amount >= 500_000 ? 3 : 1;
+    await this.apply({
+      userId: evt.userId,
+      delta,
+      reason: 'purchase',
+      externalId: `purchase:${evt.purchaseId}`,
+      meta: { amount: evt.amount, currency: evt.currency, itemId: evt.itemId, at: evt.at },
+    });
+  }
+
   isRecord(v: unknown): v is Record<string, unknown> {
     return typeof v === 'object' && v !== null && !Array.isArray(v);
   }

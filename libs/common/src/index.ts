@@ -2,6 +2,7 @@ export type * from './types/point.types';
 export type * from './types/identity.types';
 export type * from './types/prize.types';
 export type * from './types/spin.types';
+export type * from './types/billing.types';
 
 export const REASONS = [
   'signup',
@@ -32,6 +33,11 @@ export const MSG = {
 
   // رویداد رفرال (از identity)
   REFERRAL_SIGNUP: 'referral.signup',
+
+  // Billing
+  BILLING_PURCHASE_CREATE: 'billing.purchase.create',
+  BILLING_PURCHASE_STATUS: 'billing.purchase.status',
+  BILLING_PURCHASE_PAID: 'billing.purchase.paid',
 } as const;
 
 export interface WeightedPrize {

@@ -4,7 +4,7 @@ import { SpinGatewayService } from './spin.service';
 import { SpinResult } from 'libs/common/src/types/spin.types';
 import { UserId } from '../../common/auth-user.decorator';
 
-@Controller('api/spin')
+@Controller('spin')
 export class SpinController {
   constructor(private readonly spinSvc: SpinGatewayService) {}
 

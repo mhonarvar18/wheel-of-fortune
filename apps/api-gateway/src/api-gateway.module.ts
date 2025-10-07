@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PrizeModule } from './modules/prize/prize.module';
 import { PointsModule } from './modules/points/points.module';
 import { SpinModule } from './modules/spin/spin.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 const natsClient = (name: string) => ({
   name,
@@ -34,6 +35,7 @@ const natsClient = (name: string) => ({
     SpinModule,
     PrizeModule,
     PointsModule,
+    BillingModule,
   ],
   controllers: [ApiGatewayController],
   providers: [JwtStrategy],

@@ -6,6 +6,7 @@ import { SpinService } from './spin.service';
 import { Spin } from './models/spin.model';
 import { AwardedPrize } from './models/awarded-prize.model';
 import IORedis, { Redis } from 'ioredis';
+import { SpinMessages } from './spin.messages';
 
 export const REDIS_TOKEN = 'REDIS';
 
@@ -49,6 +50,7 @@ export const REDIS_TOKEN = 'REDIS';
       },
     ]),
   ],
+  controllers: [SpinMessages],
   providers: [
     SpinService,
     {
@@ -82,7 +84,7 @@ export const REDIS_TOKEN = 'REDIS';
   ],
 })
 export class SpinModule implements OnModuleDestroy, OnModuleInit {
-  constructor(@Inject(REDIS_TOKEN) private readonly redis: Redis) { }
+  constructor(@Inject(REDIS_TOKEN) private readonly redis: Redis) {}
 
   async onModuleInit() {
     // 🚀 تست اتصال اولیه MySQL + Redis + NATS
@@ -90,8 +92,12 @@ export class SpinModule implements OnModuleDestroy, OnModuleInit {
     try {
       await this.redis.ping();
       console.log('[Redis] ping success');
-    } catch (e: any) {
-      console.error('[Redis] ping failed ❌', e.message);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error('[Redis] ping failed ❌', e.message);
+      } else {
+        console.error('[Redis] ping failed ❌', String(e));
+      }
     }
   }
 
