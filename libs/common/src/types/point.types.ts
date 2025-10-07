@@ -37,3 +37,18 @@ export type ReferralSignupEvent = {
   refereeId: string;
   at: string; // ISO
 };
+
+export type PointsChargeDto = {
+  userId: string;
+  amount: number; // مقدار مثبت: یعنی کم‌کردن از بالانس
+  externalId: string; // برای ایدمپوتنسی
+  meta?: Record<string, unknown>;
+};
+export type PointsRefundDto = {
+  userId: string;
+  amount: number; // مقدار مثبت: یعنی برگرداندن به بالانس
+  externalId: string; // refund:<chargeId>
+  meta?: Record<string, unknown>;
+};
+
+export type PointsOpResp = { ok: true; balance: number } | { ok: false; reason: string };

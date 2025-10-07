@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { MSG, type WeightedPrize } from '@app/common';
+import { MSG, PointsOpResp, type WeightedPrize } from '@app/common';
 import { Spin } from './models/spin.model';
 import { AwardedPrize } from './models/awarded-prize.model';
 import { Inject } from '@nestjs/common';
@@ -13,6 +13,7 @@ import { lastValueFrom, timeout } from 'rxjs';
 export class SpinMessages {
   constructor(
     @Inject('PRIZE_CLIENT') private readonly prizeClient: ClientProxy,
+    @Inject('POINTS_CLIENT') private readonly pointsClient: ClientProxy,
     @InjectModel(Spin) private readonly spinModel: typeof Spin,
     @InjectModel(AwardedPrize) private readonly awardedModel: typeof AwardedPrize,
     @Inject('REDIS') private readonly redis: Redis,
@@ -27,7 +28,20 @@ export class SpinMessages {
     const locked = lockedRes === 'OK';
     if (!locked) return { error: 'SPIN_IN_PROGRESS' };
 
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
+      // 1) Charge
+      const charge = await lastValueFrom(
+        this.pointsClient
+          .send<PointsOpResp>(MSG.POINTS_CHARGE, {
+            userId,
+            amount: 1,
+            externalId: `spin:${requestId}`, // ایدمپوتنت
+          })
+          .pipe(timeout(2000)),
+      );
+      if (!charge.ok) return { error: 'INSUFFICIENT_POINTS' };
+
       const allPrizes = await lastValueFrom(
         this.prizeClient.send<WeightedPrize[]>(MSG.PRIZE_AVAILABLE, { userId }).pipe(timeout(3000)),
       );
@@ -54,8 +68,25 @@ export class SpinMessages {
           await this.awardedModel.create({ userId, prizeId: chosen.id }, { transaction: tx });
         }
         await tx.commit();
+        this.prizeClient.emit(MSG.PRIZE_AWARDED, {
+          userId,
+          prizeId: chosen.id,
+          prizeName: chosen.name,
+          type: chosen.type,
+          at: new Date().toISOString(),
+        });
       } catch (e: any) {
         await tx.rollback();
+
+        await lastValueFrom(
+          this.pointsClient
+            .send<PointsOpResp>(MSG.POINTS_REFUND, {
+              userId,
+              amount: 1,
+              externalId: `refund:${requestId}`,
+            })
+            .pipe(timeout(2000)),
+        );
         if (isSequelizeUniqueError(e)) {
           return { error: 'ALREADY_AWARDED', prizeId: chosen.id };
         }
@@ -88,11 +119,29 @@ function errMessage(err: unknown): string {
 }
 
 function weightedPick(prizes: WeightedPrize[]) {
-  const sum = prizes.reduce((s, p) => s + p.weight, 0);
-  let r = Math.random() * sum;
-  for (const p of prizes) {
-    r -= p.weight;
-    if (r <= 0) return p;
+  if (prizes.length === 0) {
+    throw new Error('weightedPick: empty prize list');
   }
+
+  // مجموع وزن‌ها (فقط وزن‌های مثبت)
+  const totalWeight = prizes.reduce((acc, prize) => acc + Math.max(0, prize.weight), 0);
+
+  // اگر تمام وزن‌ها صفر/منفی بود، به‌صورت پیش‌فرض آخرین جایزه را برگردان
+  if (totalWeight <= 0) return prizes[prizes.length - 1];
+
+  // عدد تصادفی در بازه [0, totalWeight)
+  const threshold = Math.random() * totalWeight;
+
+  // با جمع شونده جلو می‌رویم تا به آستانه برسیم
+  let cumulative = 0;
+  for (const prize of prizes) {
+    const w = Math.max(0, prize.weight);
+    cumulative += w;
+    if (threshold < cumulative) {
+      return prize;
+    }
+  }
+
+  // در عمل نباید به اینجا برسیم؛ برای اطمینان:
   return prizes[prizes.length - 1];
 }

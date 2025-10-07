@@ -5,6 +5,7 @@ import { User } from './models/user.model';
 import { IdentityController } from './identity.controller';
 import { IdentityService } from './identity.service';
 import { JwtModule } from '@nestjs/jwt';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -32,6 +33,16 @@ import { JwtModule } from '@nestjs/jwt';
       }),
     }),
     SequelizeModule.forFeature([User]),
+    ClientsModule.registerAsync([
+      {
+        name: 'POINTS_CLIENT',
+        inject: [ConfigService],
+        useFactory: (cfg: ConfigService) => ({
+          transport: Transport.NATS,
+          options: { servers: [cfg.get('NATS_URL', 'nats://127.0.0.1:4222')] },
+        }),
+      },
+    ]),
   ],
   controllers: [IdentityController],
   providers: [IdentityService],

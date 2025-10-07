@@ -30,6 +30,8 @@ export const MSG = {
   POINTS_APPLY: 'points.apply',
   POINTS_BALANCE: 'points.balance',
   POINTS_HISTORY: 'points.history',
+  POINTS_CHARGE: 'points.charge',
+  POINTS_REFUND: 'points.refund',
 
   // رویداد رفرال (از identity)
   REFERRAL_SIGNUP: 'referral.signup',

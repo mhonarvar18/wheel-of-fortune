@@ -1,10 +1,10 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { PointEntry } from '../../points/src/models/point-entry.model';
-import { PointBalance } from '../../points/src/models/point-balance.model';
+import { PointEntry } from './models/point-entry.model';
+import { PointBalance } from './models/point-balance.model';
 
-import type { Transaction } from 'sequelize';
+import { Transaction } from 'sequelize';
 import { UniqueConstraintError } from 'sequelize';
 
 import { REASONS, MSG } from '@app/common'; // مقدارها از پکیج
@@ -14,6 +14,9 @@ import type {
   PointsBalanceResponse,
   PointsEntry,
   PointsHistoryResponse,
+  PointsChargeDto,
+  PointsOpResp,
+  PointsRefundDto,
 } from '@app/common';
 
 @Controller()
@@ -160,14 +163,27 @@ export class PointsMessages {
     itemId: string;
     at: string;
   }) {
-    const delta = evt.amount >= 1_000_000 ? 5 : evt.amount >= 500_000 ? 3 : 1;
-    await this.apply({
-      userId: evt.userId,
-      delta,
-      reason: 'purchase',
-      externalId: `purchase:${evt.purchaseId}`,
-      meta: { amount: evt.amount, currency: evt.currency, itemId: evt.itemId, at: evt.at },
-    });
+    // Rule #1: ≥ 100k => +1
+    if (evt.amount >= 100_000 && evt.amount < 200_000) {
+      await this.apply({
+        userId: evt.userId,
+        delta: +1,
+        reason: 'purchase',
+        externalId: `purchase:${evt.purchaseId}:100k`, // ایدمپوتنت جدا
+        meta: { amount: evt.amount, currency: evt.currency, itemId: evt.itemId, at: evt.at },
+      });
+    }
+
+    // Rule #2: ≥ 200k => +2
+    if (evt.amount >= 200_000) {
+      await this.apply({
+        userId: evt.userId,
+        delta: +2,
+        reason: 'purchase',
+        externalId: `purchase:${evt.purchaseId}:200k`, // ایدمپوتنت جدا
+        meta: { amount: evt.amount, currency: evt.currency, itemId: evt.itemId, at: evt.at },
+      });
+    }
   }
 
   isRecord(v: unknown): v is Record<string, unknown> {
@@ -190,5 +206,111 @@ export class PointsMessages {
       externalId: `referral:referee:${evt.refereeId}`,
       meta: { at: evt.at },
     });
+  }
+
+  @MessagePattern(MSG.POINTS_CHARGE)
+  async charge(dto: PointsChargeDto): Promise<PointsOpResp> {
+    const sequelize = this.entries.sequelize!;
+    const tx = await sequelize.transaction();
+    try {
+      // ایدمپوتنت: اگر قبلاً همین externalId ثبت شده، OK
+      const dup = await this.entries.count({
+        where: { externalId: dto.externalId },
+        transaction: tx,
+      });
+      if (dup > 0) {
+        const bal = await this.balances.findByPk(dto.userId, { transaction: tx });
+        await tx.commit();
+        return { ok: true, balance: bal?.balance ?? 0 };
+      }
+
+      await this.ensureBalance(dto.userId, tx);
+
+      // قفل ردیف بالانس برای جلوگیری از ریس
+      const bal = await this.balances.findByPk(dto.userId, {
+        transaction: tx,
+        lock: Transaction.LOCK.UPDATE,
+      });
+
+      if (!bal || bal.balance < dto.amount) {
+        await tx.rollback();
+        return { ok: false, reason: 'INSUFFICIENT' };
+      }
+
+      await this.entries.create(
+        {
+          userId: dto.userId,
+          delta: -dto.amount, // کم‌کردن
+          reason: 'spin_cost', // یا reason جدا مثل 'spin_cost'؛ دلخواه
+          externalId: dto.externalId,
+          meta: dto.meta ?? null,
+        },
+        { transaction: tx },
+      );
+
+      await this.balances.decrement(
+        { balance: dto.amount },
+        { where: { userId: dto.userId }, transaction: tx },
+      );
+      await this.balances.update(
+        { updatedAt: new Date() },
+        { where: { userId: dto.userId }, transaction: tx },
+      );
+
+      const newBal = await this.balances.findByPk(dto.userId, { transaction: tx });
+      await tx.commit();
+      return { ok: true, balance: newBal?.balance ?? 0 };
+    } catch (err) {
+      await tx.rollback();
+      if (err instanceof UniqueConstraintError) return { ok: true, balance: 0 };
+      return { ok: false, reason: 'ERROR' };
+    }
+  }
+
+  @MessagePattern(MSG.POINTS_REFUND)
+  async refund(dto: PointsRefundDto): Promise<PointsOpResp> {
+    const sequelize = this.entries.sequelize!;
+    const tx = await sequelize.transaction();
+    try {
+      const dup = await this.entries.count({
+        where: { externalId: dto.externalId },
+        transaction: tx,
+      });
+      if (dup > 0) {
+        const bal = await this.balances.findByPk(dto.userId, { transaction: tx });
+        await tx.commit();
+        return { ok: true, balance: bal?.balance ?? 0 };
+      }
+
+      await this.ensureBalance(dto.userId, tx);
+
+      await this.entries.create(
+        {
+          userId: dto.userId,
+          delta: +dto.amount, // برگرداندن
+          reason: 'spin_refund', // یا 'spin_refund'؛ دلخواه
+          externalId: dto.externalId,
+          meta: dto.meta ?? null,
+        },
+        { transaction: tx },
+      );
+
+      await this.balances.increment(
+        { balance: dto.amount },
+        { where: { userId: dto.userId }, transaction: tx },
+      );
+      await this.balances.update(
+        { updatedAt: new Date() },
+        { where: { userId: dto.userId }, transaction: tx },
+      );
+
+      const newBal = await this.balances.findByPk(dto.userId, { transaction: tx });
+      await tx.commit();
+      return { ok: true, balance: newBal?.balance ?? 0 };
+    } catch (err) {
+      await tx.rollback();
+      if (err instanceof UniqueConstraintError) return { ok: true, balance: 0 };
+      return { ok: false, reason: 'ERROR' };
+    }
   }
 }

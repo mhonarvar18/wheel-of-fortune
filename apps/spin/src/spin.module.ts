@@ -48,6 +48,23 @@ export const REDIS_TOKEN = 'REDIS';
           },
         }),
       },
+      {
+        name: 'POINTS_CLIENT',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (cfg: ConfigService) => ({
+          transport: Transport.NATS,
+          options: {
+            servers: [cfg.get('NATS_URL', 'nats://127.0.0.1:4222')], // ✅ IPv4
+            reconnect: true, // ✅ پایداری اتصال NATS
+            maxReconnectAttempts: -1,
+            tls: false,
+            noRandomize: true,
+            pingInterval: 5000,
+            timeout: 2000,
+          },
+        }),
+      },
     ]),
   ],
   controllers: [SpinMessages],
