@@ -6,8 +6,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './common/jwt.strategy';
 import { AuthModule } from './modules/auth/auth.module';
-import { SpinModule } from 'apps/spin/src/spin.module';
 import { PrizeModule } from './modules/prize/prize.module';
+import { PointsModule } from './modules/points/points.module';
+import { SpinModule } from './modules/spin/spin.module';
 
 const natsClient = (name: string) => ({
   name,
@@ -32,6 +33,7 @@ const natsClient = (name: string) => ({
     AuthModule,
     SpinModule,
     PrizeModule,
+    PointsModule,
   ],
   controllers: [ApiGatewayController],
   providers: [JwtStrategy],

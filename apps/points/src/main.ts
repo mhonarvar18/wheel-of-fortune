@@ -51,7 +51,7 @@ async function bootstrap() {
   });
 
   await app.listen();
-  console.log('✅ Spin microservice connected to NATS');
+  console.log('✅ Points microservice connected to NATS');
 }
 
 bootstrap();

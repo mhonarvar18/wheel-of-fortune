@@ -164,7 +164,7 @@ npm run start:dev:points
 # 5) API Gateway
 
 ```bash
-npm run start:dev:api-gateway
+npm run start:dev:gateway
 ```
 
 🧩 API Endpoints (via API Gateway)

@@ -5,6 +5,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PointEntry } from './models/point-entry.model';
 import { PointBalance } from './models/point-balance.model';
 import { PointsMessages } from './points.message';
+import { PointsController } from './points.controller';
+import { PointsService } from './points.service';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { PointsMessages } from './points.message';
       },
     ]),
   ],
-  providers: [PointsMessages],
+  controllers: [PointsController, PointsMessages],
+  providers: [PointsService],
 })
 export class PointsModule {}

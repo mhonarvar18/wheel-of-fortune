@@ -10,12 +10,12 @@ import { JwtModule } from '@nestjs/jwt';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     JwtModule.registerAsync({
-    inject: [ConfigService],
-    useFactory: (cfg: ConfigService) => ({
-      secret: cfg.get('JWT_SECRET', 'dev'),
-      signOptions: { expiresIn: cfg.get('JWT_EXPIRES', '1d') },
+      inject: [ConfigService],
+      useFactory: (cfg: ConfigService) => ({
+        secret: cfg.get('JWT_SECRET', 'dev'),
+        signOptions: { expiresIn: cfg.get('JWT_EXPIRES', '1d') },
+      }),
     }),
-  }),
     SequelizeModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (cfg: ConfigService) => ({
