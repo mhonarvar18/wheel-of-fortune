@@ -167,6 +167,12 @@ npm run start:dev:points
 npm run start:dev:gateway
 ```
 
+# 6) Billing
+
+```bash
+npm run start:dev:billing
+```
+
 🧩 API Endpoints (via API Gateway)
 Endpoint Method Description
 /api/auth/register POST Register new user
