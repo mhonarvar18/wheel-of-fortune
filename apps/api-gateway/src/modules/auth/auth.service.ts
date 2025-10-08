@@ -9,7 +9,7 @@ const MSG = { AUTH_REGISTER: 'auth.register', AUTH_LOGIN: 'auth.login' } as cons
 export class AuthService {
   constructor(@Inject('IDENTITY_CLIENT') private readonly identityClient: ClientProxy) {}
 
-  async register(dto: { mobile: string; password: string }) {
+  async register(dto: { mobile: string; password: string; referralCode: string }) {
     const obs$ = this.identityClient
       .send<RegisterResponse>(MSG.AUTH_REGISTER, dto)
       .pipe(timeout(3000));
